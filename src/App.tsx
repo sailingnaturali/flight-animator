@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './styles.css';
-import { extractRoute, decodeSimple, decodeRich } from './route/codec';
+import { extractRoute, decodeSimple, decodeRich, encodeSimple } from './route/codec';
 import { resolveStops, isPlayable } from './route/parse';
 import { loadAirports } from './route/airports';
 import type { AirportTable, Waypoint, RawStop } from './route/types';
@@ -16,6 +16,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [userMoved, setUserMoved] = useState(false);
+  // Stops decoded from a rich `?d=` link. We show the friendly code form in the input but keep the
+  // rich payload (embedded coords + dates for dwell) as the route source until the user edits it.
+  const [richRaw, setRichRaw] = useState<RawStop[] | null>(null);
   const { frame, start, reset } = usePlayback(waypoints);
 
   // load airport table + map once
@@ -36,12 +39,31 @@ export default function App() {
   useEffect(() => {
     if (!table) return;
     const r = extractRoute(window.location.search || window.location.hash.replace('#', ''));
-    if (r) setInput(r.form === 'rich' ? `?d=${r.value}` : r.value);
+    if (!r) return;
+    if (r.form === 'rich') {
+      // Show the friendly code form (e.g. "yyj-yvr-den") instead of the raw base64 blob, but keep
+      // the decoded rich stops so the animation still uses the embedded coords + dwell dates.
+      try {
+        const raw = decodeRich(r.value);
+        setRichRaw(raw);
+        setInput(encodeSimple(raw));
+      } catch {
+        setInput(`?d=${r.value}`);
+      }
+    } else {
+      setInput(r.value);
+    }
   }, [table]);
 
   // resolve input -> waypoints whenever input or table changes
   const resolved = useMemo(() => {
-    if (!table || !input.trim()) return null;
+    if (!table) return null;
+    // While the input still matches the friendly form of a loaded rich route, resolve the rich
+    // stops (embedded coords + dates) rather than re-parsing the lossy simple text.
+    if (richRaw && input.trim() === encodeSimple(richRaw)) {
+      return resolveStops(richRaw, table);
+    }
+    if (!input.trim()) return null;
     try {
       const r = extractRoute(input.trim());
       if (!r) return null;
@@ -50,7 +72,7 @@ export default function App() {
     } catch (e) {
       return { waypoints: [], errors: [(e as Error).message] };
     }
-  }, [input, table]);
+  }, [input, table, richRaw]);
 
   useEffect(() => {
     if (resolved && isPlayable(resolved)) {
