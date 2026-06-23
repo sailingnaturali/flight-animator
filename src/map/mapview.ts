@@ -39,6 +39,7 @@ export function createMapView(container: HTMLElement): MapView {
   });
 
   let planeEl: HTMLDivElement | null = null;
+  let planeGlyphEl: HTMLElement | null = null;
   let planeMarker: maplibregl.Marker | null = null;
   const labelMarkers: maplibregl.Marker[] = [];
   // The leg index the camera is currently framed on, so we re-zoom once per segment, not every frame.
@@ -139,18 +140,23 @@ export function createMapView(container: HTMLElement): MapView {
         }
       }
 
-      // plane marker
+      // plane marker. MapLibre owns the marker element's transform (translate to position
+      // it), so we rotate an inner glyph instead — writing rotate() onto the marker element
+      // itself would clobber the translate and the plane would vanish whenever the camera is idle.
       if (frame.plane) {
         if (!planeMarker) {
           planeEl = document.createElement('div');
           planeEl.className = 'plane';
+          planeGlyphEl = document.createElement('span');
+          planeGlyphEl.className = 'plane-glyph';
           // U+FE0E forces text (monochrome) presentation so our CSS color applies instead of an emoji glyph.
-          planeEl.textContent = '✈︎';
+          planeGlyphEl.textContent = '✈︎';
+          planeEl.appendChild(planeGlyphEl);
           planeMarker = new maplibregl.Marker({ element: planeEl }).setLngLat([frame.plane.lon, frame.plane.lat]).addTo(map);
         }
         planeMarker.setLngLat([frame.plane.lon, frame.plane.lat]);
         // The ✈ glyph points up (north) at 0°; subtract 90° to align it with the great-circle bearing convention where 0° = east.
-        if (planeEl) planeEl.style.transform = `rotate(${frame.plane.bearing - 90}deg)`;
+        if (planeGlyphEl) planeGlyphEl.style.transform = `rotate(${frame.plane.bearing - 90}deg)`;
       }
 
       // camera: re-zoom to fill the screen with each new leg as the plane reaches it
@@ -168,7 +174,7 @@ export function createMapView(container: HTMLElement): MapView {
       if (map.getSource('trail')) (map.getSource('trail') as maplibregl.GeoJSONSource).setData(emptyFc());
       labelMarkers.forEach((m) => m.remove());
       labelMarkers.length = 0;
-      if (planeMarker) { planeMarker.remove(); planeMarker = null; planeEl = null; }
+      if (planeMarker) { planeMarker.remove(); planeMarker = null; planeEl = null; planeGlyphEl = null; }
     },
     destroy() {
       map.remove();
