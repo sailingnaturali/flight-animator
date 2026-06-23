@@ -77,8 +77,10 @@ each. Two ways a route gets into the app, both decoding to the same waypoint lis
      `{ code? , lat?, lon?, label, arrive?, depart? }` (ISO 8601).
    - The Flighty MCP produces this. Coordinates can be embedded so the app needs no
      lookup, but a `code` is also accepted (resolved via the table).
-   - **Dwell** at a stop is computed from the gap between that stop's `arrive` and
-     the next stop's `depart`. **Dates** for label stamps come from these fields.
+   - **Dwell** at a stop is computed from that stop's own `arrive`→`depart` gap (the
+     time spent there). **Dates** for label stamps come from these fields. The exact
+     `?d=` payload schema is the canonical contract defined in `flighty-mcp`'s
+     `animator-route` spec; both sides share a golden encode vector.
 
 The paste box accepts either the bare `r=` form (e.g. `sfo-lhr-cdg`) or a full URL
 containing `?r=`/`?d=`. On load, the app reads `window.location` for `r`/`d` and
