@@ -68,6 +68,19 @@ export default function App() {
     if (waypoints) viewRef.current?.renderFrame(frame, waypoints);
   }, [frame, waypoints]);
 
+  // Esc stops playback and returns to the input; the route stays drawn for a fresh start.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      reset();
+      viewRef.current?.reset();
+      setUserMoved(false);
+      if (waypoints) viewRef.current?.setRoute(waypoints);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [waypoints, reset]);
+
   // States where the UI chrome hides for a clean recording.
   const recording = frame.state === 'countdown' || frame.state === 'lead'
     || frame.state === 'playing' || frame.state === 'tail';

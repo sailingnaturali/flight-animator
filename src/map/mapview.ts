@@ -13,10 +13,20 @@ const PATH_WIDTH = 3.5;
 function arcLine(a: Waypoint, b: Waypoint, upTo = 1): [number, number][] {
   const pts: [number, number][] = [];
   const steps = 64;
+  let prevLon: number | null = null;
   for (let i = 0; i <= steps; i++) {
     const f = (i / steps) * upTo;
     const p = interpolate(a, b, f);
-    pts.push([p.lon, p.lat]);
+    // Unwrap longitude so an antimeridian (±180°) crossing stays continuous instead of
+    // jumping ~360° and drawing a horizontal line across the map. MapLibre renders the
+    // out-of-range longitudes correctly across the seam.
+    let lon = p.lon;
+    if (prevLon !== null) {
+      while (lon - prevLon > 180) lon -= 360;
+      while (lon - prevLon < -180) lon += 360;
+    }
+    prevLon = lon;
+    pts.push([lon, p.lat]);
   }
   return pts;
 }
