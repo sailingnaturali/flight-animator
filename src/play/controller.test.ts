@@ -43,4 +43,28 @@ describe('createPlayback', () => {
     pb.reset();
     expect(pb.frameAt(5000).state).toBe('idle');
   });
+  it('parks at the intermediate stop during its dwell with no active leg', () => {
+    const three: Waypoint[] = [
+      { lat: 37.62, lon: -122.38, label: 'SFO' },
+      { lat: 41.97, lon: -87.90, label: 'ORD' },
+      { lat: 51.47, lon: -0.45, label: 'LHR' },
+    ];
+    const plan = buildPlan(three);
+    const dwell = plan.phases.find((p) => p.type === 'dwell');
+    if (!dwell || dwell.type !== 'dwell') throw new Error('expected a dwell phase');
+    const pb = createPlayback(plan, three);
+    pb.start(0);
+    const f = pb.frameAt(3000 + dwell.startMs + dwell.durMs / 2);
+    expect(f.state).toBe('playing');
+    expect(f.activeLegIndex).toBeNull();
+    expect(f.arrivedIndices).toContain(1);
+    expect(f.plane).toMatchObject({ lat: three[1].lat, lon: three[1].lon });
+  });
+
+  it('honors a custom countdownMs', () => {
+    const pb = createPlayback(buildPlan(wps), wps, { countdownMs: 1000 });
+    pb.start(0);
+    expect(pb.frameAt(500).state).toBe('countdown');
+    expect(pb.frameAt(1000).state).toBe('playing');
+  });
 });

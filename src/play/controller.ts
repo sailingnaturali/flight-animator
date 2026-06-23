@@ -18,7 +18,15 @@ export interface Playback {
   frameAt(nowMs: number): Frame;
 }
 
-const IDLE: Frame = { state: 'idle', countdownRemainingMs: 0, plane: null, activeLegIndex: null, arrivedIndices: [] };
+function idleFrame(): Frame {
+  return {
+    state: 'idle',
+    countdownRemainingMs: 0,
+    plane: null,
+    activeLegIndex: null,
+    arrivedIndices: [],
+  };
+}
 
 export function createPlayback(
   plan: TimedPlan,
@@ -50,10 +58,10 @@ export function createPlayback(
       startTs = null;
     },
     frameAt(nowMs: number): Frame {
-      if (startTs === null) return IDLE;
+      if (startTs === null) return idleFrame();
       const elapsed = nowMs - startTs;
       if (elapsed < countdownMs) {
-        return { ...IDLE, state: 'countdown', countdownRemainingMs: countdownMs - elapsed };
+        return { ...idleFrame(), state: 'countdown', countdownRemainingMs: countdownMs - elapsed };
       }
       const playMs = elapsed - countdownMs;
       if (playMs >= plan.totalMs) {
