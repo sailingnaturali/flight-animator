@@ -1,0 +1,8 @@
+{
+  "stops": [
+    { "code": "SFO", "label": "San Francisco", "depart": "2025-04-15T14:30:00Z" },
+    { "code": "LHR", "label": "London", "arrive": "2025-04-15T22:15:00Z", "depart": "2025-04-18T09:00:00Z" },
+    { "code": "CDG", "label": "Paris", "arrive": "2025-04-18T10:20:00Z" }
+  ],
+  "encoded": "eyJ2IjoxLCJzdG9wcyI6W3siY29kZSI6IlNGTyIsImxhYmVsIjoiU2FuIEZyYW5jaXNjbyIsImRlcGFydCI6IjIwMjUtMDQtMTVUMTQ6MzA6MDBaIn0seyJjb2RlIjoiTEhSIiwibGFiZWwiOiJMb25kb24iLCJhcnJpdmUiOiIyMDI1LTA0LTE1VDIyOjE1OjAwWiIsImRlcGFydCI6IjIwMjUtMDQtMThUMDk6MDA6MDBaIn0seyJjb2RlIjoiQ0RHIiwibGFiZWwiOiJQYXJpcyIsImFycml2ZSI6IjIwMjUtMDQtMThUMTA6MjA6MDBaIn1dfQ"
+}
