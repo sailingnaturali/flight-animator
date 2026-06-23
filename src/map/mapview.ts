@@ -89,6 +89,7 @@ export function createMapView(container: HTMLElement): MapView {
       map.on('load', cb);
     },
     setRoute(wps) {
+      if (!map.isStyleLoaded()) return;
       ensureSources();
       (map.getSource('full') as maplibregl.GeoJSONSource).setData(fullRouteFc(wps));
       (map.getSource('dots') as maplibregl.GeoJSONSource).setData(dotsFc(wps));
@@ -98,6 +99,7 @@ export function createMapView(container: HTMLElement): MapView {
       fitWhole(wps);
     },
     renderFrame(frame, wps) {
+      if (!map.isStyleLoaded()) return;
       ensureSources();
       // trail: all completed legs solid, plus partial active leg
       const feats: GeoJSON.Feature[] = [];
@@ -107,11 +109,10 @@ export function createMapView(container: HTMLElement): MapView {
           feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: arcLine(wps[i], wps[i + 1]) }, properties: {} });
         }
       }
-      if (frame.activeLegIndex !== null && frame.plane) {
+      if (frame.activeLegIndex !== null && frame.activeLegFraction !== null) {
         const a = wps[frame.activeLegIndex];
         const b = wps[frame.activeLegIndex + 1];
-        // approximate fraction from plane distance is unnecessary; redraw whole arc faintly handled by 'full'
-        feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: arcLineToPlane(a, b, frame.plane) }, properties: {} });
+        feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: arcLine(a, b, frame.activeLegFraction) }, properties: {} });
       }
       (map.getSource('trail') as maplibregl.GeoJSONSource).setData({ type: 'FeatureCollection', features: feats });
 
@@ -146,10 +147,10 @@ export function createMapView(container: HTMLElement): MapView {
         map.easeTo({ center: [mid.lon, mid.lat], duration: 300 });
       }
       if (frame.state === 'done') fitWhole(wps);
+      if (frame.state === 'idle') fitWhole(wps);
     },
     reset() {
-      ensureSources();
-      (map.getSource('trail') as maplibregl.GeoJSONSource).setData(emptyFc());
+      if (map.getSource('trail')) (map.getSource('trail') as maplibregl.GeoJSONSource).setData(emptyFc());
       labelMarkers.forEach((m) => m.remove());
       labelMarkers.length = 0;
       if (planeMarker) { planeMarker.remove(); planeMarker = null; planeEl = null; }
@@ -160,9 +161,3 @@ export function createMapView(container: HTMLElement): MapView {
   };
 }
 
-function arcLineToPlane(a: Waypoint, b: Waypoint, plane: { lat: number; lon: number }): [number, number][] {
-  // draw the arc and append the plane position as the live endpoint
-  const pts = arcLine(a, b);
-  pts.push([plane.lon, plane.lat]);
-  return pts;
-}

@@ -9,6 +9,7 @@ export interface Frame {
   countdownRemainingMs: number;
   plane: { lat: number; lon: number; bearing: number } | null;
   activeLegIndex: number | null;
+  activeLegFraction: number | null;
   arrivedIndices: number[];
 }
 
@@ -24,6 +25,7 @@ function idleFrame(): Frame {
     countdownRemainingMs: 0,
     plane: null,
     activeLegIndex: null,
+    activeLegFraction: null,
     arrivedIndices: [],
   };
 }
@@ -71,6 +73,7 @@ export function createPlayback(
           countdownRemainingMs: 0,
           plane: { lat: last.lat, lon: last.lon, bearing: 0 },
           activeLegIndex: null,
+          activeLegFraction: null,
           arrivedIndices: waypoints.map((_, i) => i),
         };
       }
@@ -85,6 +88,7 @@ export function createPlayback(
           countdownRemainingMs: 0,
           plane: { lat: pos.lat, lon: pos.lon, bearing: bearing(a, b, f) },
           activeLegIndex: phase.fromIndex,
+          activeLegFraction: f,
           arrivedIndices: arrivedBy(playMs),
         };
       }
@@ -95,6 +99,7 @@ export function createPlayback(
         countdownRemainingMs: 0,
         plane: { lat: at.lat, lon: at.lon, bearing: 0 },
         activeLegIndex: null,
+        activeLegFraction: null,
         arrivedIndices: arrivedBy(playMs),
       };
     },

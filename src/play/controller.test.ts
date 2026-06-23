@@ -67,4 +67,12 @@ describe('createPlayback', () => {
     expect(pb.frameAt(500).state).toBe('countdown');
     expect(pb.frameAt(1000).state).toBe('playing');
   });
+
+  it('exposes the active-leg fraction while flying', () => {
+    const plan = buildPlan(wps);
+    const pb = createPlayback(plan, wps);
+    pb.start(0);
+    const f = pb.frameAt(3000 + plan.phases[0].durMs / 2);
+    expect(f.activeLegFraction).toBeCloseTo(0.5, 5);
+  });
 });
