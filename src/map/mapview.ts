@@ -5,7 +5,10 @@ import type { Frame } from '../play/controller';
 import { interpolate } from '../geo/greatcircle';
 
 const DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
-const ARC = '#ff5a4d';
+// Google-nav style: the not-yet-flown path is blue, the flown path behind the plane is gray.
+const AHEAD = '#4287f5';
+const BEHIND = '#9aa0a6';
+const PATH_WIDTH = 3.5;
 
 function arcLine(a: Waypoint, b: Waypoint, upTo = 1): [number, number][] {
   const pts: [number, number][] = [];
@@ -38,19 +41,21 @@ export function createMapView(container: HTMLElement): MapView {
   let planeEl: HTMLDivElement | null = null;
   let planeMarker: maplibregl.Marker | null = null;
   const labelMarkers: maplibregl.Marker[] = [];
+  // The leg index the camera is currently framed on, so we re-zoom once per segment, not every frame.
+  let framedLeg: number | null = null;
 
   function ensureSources() {
     if (!map.getSource('full')) {
       map.addSource('full', { type: 'geojson', data: emptyFc() });
-      map.addLayer({ id: 'full', type: 'line', source: 'full', paint: { 'line-color': ARC, 'line-opacity': 0.25, 'line-width': 1.5 } });
+      map.addLayer({ id: 'full', type: 'line', source: 'full', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': AHEAD, 'line-width': PATH_WIDTH } });
     }
     if (!map.getSource('trail')) {
       map.addSource('trail', { type: 'geojson', data: emptyFc() });
-      map.addLayer({ id: 'trail', type: 'line', source: 'trail', paint: { 'line-color': ARC, 'line-width': 2.5 } });
+      map.addLayer({ id: 'trail', type: 'line', source: 'trail', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': BEHIND, 'line-width': PATH_WIDTH } });
     }
     if (!map.getSource('dots')) {
       map.addSource('dots', { type: 'geojson', data: emptyFc() });
-      map.addLayer({ id: 'dots', type: 'circle', source: 'dots', paint: { 'circle-radius': 4, 'circle-color': '#fff', 'circle-stroke-color': ARC, 'circle-stroke-width': 1.5 } });
+      map.addLayer({ id: 'dots', type: 'circle', source: 'dots', paint: { 'circle-radius': 4, 'circle-color': '#fff', 'circle-stroke-color': AHEAD, 'circle-stroke-width': 1.5 } });
     }
   }
 
@@ -82,6 +87,13 @@ export function createMapView(container: HTMLElement): MapView {
     const b = new maplibregl.LngLatBounds();
     wps.forEach((w) => b.extend([w.lon, w.lat]));
     map.fitBounds(b, { padding: 80, duration: 600 });
+  }
+
+  // Frame a single leg so it fills the screen; bounds cover the bowed great-circle arc, not just endpoints.
+  function fitLeg(a: Waypoint, b: Waypoint) {
+    const bounds = new maplibregl.LngLatBounds();
+    arcLine(a, b).forEach((c) => bounds.extend(c));
+    map.fitBounds(bounds, { padding: 120, duration: 1400, maxZoom: 6 });
   }
 
   return {
@@ -132,7 +144,8 @@ export function createMapView(container: HTMLElement): MapView {
         if (!planeMarker) {
           planeEl = document.createElement('div');
           planeEl.className = 'plane';
-          planeEl.textContent = '✈';
+          // U+FE0E forces text (monochrome) presentation so our CSS color applies instead of an emoji glyph.
+          planeEl.textContent = '✈︎';
           planeMarker = new maplibregl.Marker({ element: planeEl }).setLngLat([frame.plane.lon, frame.plane.lat]).addTo(map);
         }
         planeMarker.setLngLat([frame.plane.lon, frame.plane.lat]);
@@ -140,17 +153,18 @@ export function createMapView(container: HTMLElement): MapView {
         if (planeEl) planeEl.style.transform = `rotate(${frame.plane.bearing - 90}deg)`;
       }
 
-      // camera follow the active leg
+      // camera: re-zoom to fill the screen with each new leg as the plane reaches it
       if (frame.state === 'playing' && frame.activeLegIndex !== null) {
-        const a = wps[frame.activeLegIndex];
-        const b = wps[frame.activeLegIndex + 1];
-        const mid = interpolate(a, b, 0.5);
-        map.easeTo({ center: [mid.lon, mid.lat], duration: 300 });
+        if (frame.activeLegIndex !== framedLeg) {
+          framedLeg = frame.activeLegIndex;
+          fitLeg(wps[frame.activeLegIndex], wps[frame.activeLegIndex + 1]);
+        }
       }
-      if (frame.state === 'done') fitWhole(wps);
-      if (frame.state === 'idle') fitWhole(wps);
+      if (frame.state === 'done') { framedLeg = null; fitWhole(wps); }
+      if (frame.state === 'idle') { framedLeg = null; fitWhole(wps); }
     },
     reset() {
+      framedLeg = null;
       if (map.getSource('trail')) (map.getSource('trail') as maplibregl.GeoJSONSource).setData(emptyFc());
       labelMarkers.forEach((m) => m.remove());
       labelMarkers.length = 0;

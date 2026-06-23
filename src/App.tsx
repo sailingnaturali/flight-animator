@@ -91,6 +91,8 @@ export default function App() {
     <div className="app">
       <div className="map" ref={mapRef} />
 
+      <div className="watermark">sailingnaturali.com</div>
+
       {!playing && frame.state !== 'done' && (
         <div className="controls">
           <input
