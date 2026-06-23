@@ -4,6 +4,10 @@ A standalone static single-page app that animates multi-stop flight routes on a 
 MapLibre GL map. Great-circle arcs, animated trail, stop-label markers with optional date
 stamps. No server, no sign-in — just a URL.
 
+![Flight Animator demo — Victoria → Calgary → Frankfurt → Berlin](docs/media/demo.gif)
+
+Live at **[flights.sailingnaturali.com](https://flights.sailingnaturali.com)**.
+
 ## URL formats
 
 Two interchangeable query-string formats drive the animation. Either can be pasted into the
@@ -14,13 +18,13 @@ input box or linked directly.
 Dash-separated IATA codes:
 
 ```
-https://flight-animator.vercel.app/?r=sfo-lhr-cdg-nrt
+https://flights.sailingnaturali.com/?r=sfo-lhr-cdg-nrt
 ```
 
 Coordinate stops use `lat,lon` (and optionally `|Label`) in place of an airport code:
 
 ```
-https://flight-animator.vercel.app/?r=sfo-48.76,-122.5|Cabin-sea
+https://flights.sailingnaturali.com/?r=sfo-48.76,-122.5|Cabin-sea
 ```
 
 Any stop that isn't a known IATA code and matches `lat,lon` (or `-lat,lon` for negative
@@ -36,7 +40,7 @@ base64 blob. The [Flighty MCP](https://github.com/sailingnaturali/flighty-mcp) e
 links directly from your Flighty flight history so you can share or replay real itineraries.
 
 ```
-https://flight-animator.vercel.app/?d=eyJ2IjoxLCJzdG9wcyI6W3siY29kZSI6IlNGTyIsImxhYmVsIjoiU2FuIEZyYW5jaXNjbyIsImRlcGFydCI6IjIwMjUtMDQtMTVUMTQ6MzA6MDBaIn0seyJjb2RlIjoiTEhSIiwibGFiZWwiOiJMb25kb24iLCJhcnJpdmUiOiIyMDI1LTA0LTE1VDIyOjE1OjAwWiIsImRlcGFydCI6IjIwMjUtMDQtMThUMDk6MDA6MDBaIn0seyJjb2RlIjoiQ0RHIiwibGFiZWwiOiJQYXJpcyIsImFycml2ZSI6IjIwMjUtMDQtMThUMTA6MjA6MDBaIn1dfQ
+https://flights.sailingnaturali.com/?d=eyJ2IjoxLCJzdG9wcyI6W3siY29kZSI6IlNGTyIsImxhYmVsIjoiU2FuIEZyYW5jaXNjbyIsImRlcGFydCI6IjIwMjUtMDQtMTVUMTQ6MzA6MDBaIn0seyJjb2RlIjoiTEhSIiwibGFiZWwiOiJMb25kb24iLCJhcnJpdmUiOiIyMDI1LTA0LTE1VDIyOjE1OjAwWiIsImRlcGFydCI6IjIwMjUtMDQtMThUMDk6MDA6MDBaIn0seyJjb2RlIjoiQ0RHIiwibGFiZWwiOiJQYXJpcyIsImFycml2ZSI6IjIwMjUtMDQtMThUMTA6MjA6MDBaIn1dfQ
 ```
 
 When both `?r=` and `?d=` are present, `?d=` takes precedence.
