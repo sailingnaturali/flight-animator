@@ -138,7 +138,7 @@ export default function App() {
     <div className="app">
       <div className="map" ref={mapRef} />
 
-      <div className="watermark">sailingnaturali.com</div>
+      <a className="watermark" href="https://sailingnaturali.com" target="_blank" rel="noopener noreferrer">sailingnaturali.com</a>
 
       {showResetZoom && (
         <button className="reset-zoom" onClick={onResetZoom}>Reset zoom</button>

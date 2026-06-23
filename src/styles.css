@@ -47,10 +47,11 @@ html, body, #root { margin: 0; height: 100%; background: #0b0e14; }
   text-shadow: 0 1px 4px #000, 0 0 8px #000; pointer-events: none;
 }
 
-/* Persistent brand watermark — always visible, including during recording. */
+/* Persistent brand watermark link — always visible, including during recording. */
 .watermark {
   position: absolute; top: 14px; right: 16px; z-index: 5;
-  font: 600 14px/1 system-ui, sans-serif; letter-spacing: .02em;
+  font: 600 14px/1 system-ui, sans-serif; letter-spacing: .02em; text-decoration: none;
   color: rgba(255,255,255,.78); text-shadow: 0 1px 3px #000, 0 0 6px rgba(0,0,0,.8);
-  pointer-events: none; user-select: none;
+  user-select: none; cursor: pointer;
 }
+.watermark:hover { color: #fff; }
