@@ -1,4 +1,5 @@
 import maplibregl from 'maplibre-gl';
+import type * as GeoJSON from 'geojson';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Waypoint } from '../route/types';
 import type { Frame } from '../play/controller';
