@@ -2,7 +2,7 @@ import type { TimedPlan } from '../geo/timeline';
 import type { Waypoint } from '../route/types';
 import { interpolate, bearing } from '../geo/greatcircle';
 
-export type PlaybackState = 'idle' | 'countdown' | 'playing' | 'done';
+export type PlaybackState = 'idle' | 'countdown' | 'lead' | 'playing' | 'tail' | 'done';
 
 export interface Frame {
   state: PlaybackState;
@@ -33,24 +33,30 @@ function idleFrame(): Frame {
 export function createPlayback(
   plan: TimedPlan,
   waypoints: Waypoint[],
-  opts: { countdownMs?: number } = {},
+  opts: { countdownMs?: number; leadHoldMs?: number; tailHoldMs?: number } = {},
 ): Playback {
   const countdownMs = opts.countdownMs ?? 3000;
+  // Quiet beat at the whole-route view after the countdown, before the first leg zooms in.
+  const leadHoldMs = opts.leadHoldMs ?? 2000;
+  // Hold on the final leg after the plane lands, before zooming back out to the whole route.
+  const tailHoldMs = opts.tailHoldMs ?? 3000;
   let startTs: number | null = null;
 
-  // arrival time (ms into playback) for each waypoint index
+  // arrival time (ms into leg playback) for each waypoint index
   const arrivalAt: number[] = [0];
   for (const p of plan.phases) {
     if (p.type === 'leg') arrivalAt[p.toIndex] = p.startMs + p.durMs;
   }
 
-  function arrivedBy(playMs: number): number[] {
+  function arrivedBy(legMs: number): number[] {
     const out: number[] = [];
     for (let i = 0; i < waypoints.length; i++) {
-      if (arrivalAt[i] !== undefined && playMs >= arrivalAt[i]) out.push(i);
+      if (arrivalAt[i] !== undefined && legMs >= arrivalAt[i]) out.push(i);
     }
     return out;
   }
+
+  const allArrived = () => waypoints.map((_, i) => i);
 
   return {
     start(nowMs: number) {
@@ -66,22 +72,34 @@ export function createPlayback(
         return { ...idleFrame(), state: 'countdown', countdownRemainingMs: countdownMs - elapsed };
       }
       const playMs = elapsed - countdownMs;
-      if (playMs >= plan.totalMs) {
+
+      // lead hold: whole-route view, plane parked at the origin, no labels yet
+      if (playMs < leadHoldMs) {
+        const first = waypoints[0];
+        return { ...idleFrame(), state: 'lead', plane: { lat: first.lat, lon: first.lon, bearing: 0 } };
+      }
+
+      const legMs = playMs - leadHoldMs;
+      if (legMs >= plan.totalMs) {
         const last = waypoints[waypoints.length - 1];
+        const tailMs = legMs - plan.totalMs;
+        // tail hold: keep the final leg framed before zooming out
+        const state: PlaybackState = tailMs < tailHoldMs ? 'tail' : 'done';
         return {
-          state: 'done',
+          state,
           countdownRemainingMs: 0,
           plane: { lat: last.lat, lon: last.lon, bearing: 0 },
           activeLegIndex: null,
           activeLegFraction: null,
-          arrivedIndices: waypoints.map((_, i) => i),
+          arrivedIndices: allArrived(),
         };
       }
-      const phase = plan.phases.find((p) => playMs >= p.startMs && playMs < p.startMs + p.durMs)!;
+
+      const phase = plan.phases.find((p) => legMs >= p.startMs && legMs < p.startMs + p.durMs)!;
       if (phase.type === 'leg') {
         const a = waypoints[phase.fromIndex];
         const b = waypoints[phase.toIndex];
-        const f = (playMs - phase.startMs) / phase.durMs;
+        const f = (legMs - phase.startMs) / phase.durMs;
         const pos = interpolate(a, b, f);
         return {
           state: 'playing',
@@ -89,7 +107,7 @@ export function createPlayback(
           plane: { lat: pos.lat, lon: pos.lon, bearing: bearing(a, b, f) },
           activeLegIndex: phase.fromIndex,
           activeLegFraction: f,
-          arrivedIndices: arrivedBy(playMs),
+          arrivedIndices: arrivedBy(legMs),
         };
       }
       // dwell: plane parked at the stop
@@ -100,7 +118,7 @@ export function createPlayback(
         plane: { lat: at.lat, lon: at.lon, bearing: 0 },
         activeLegIndex: null,
         activeLegFraction: null,
-        arrivedIndices: arrivedBy(playMs),
+        arrivedIndices: arrivedBy(legMs),
       };
     },
   };

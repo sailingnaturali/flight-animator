@@ -23,8 +23,10 @@ function arcLine(a: Waypoint, b: Waypoint, upTo = 1): [number, number][] {
 
 export interface MapView {
   onReady(cb: () => void): void;
+  onUserInteract(cb: () => void): void;
   setRoute(waypoints: Waypoint[]): void;
   renderFrame(frame: Frame, waypoints: Waypoint[]): void;
+  resetView(): void;
   reset(): void;
   destroy(): void;
 }
@@ -42,8 +44,10 @@ export function createMapView(container: HTMLElement): MapView {
   let planeGlyphEl: HTMLElement | null = null;
   let planeMarker: maplibregl.Marker | null = null;
   const labelMarkers: maplibregl.Marker[] = [];
-  // The leg index the camera is currently framed on, so we re-zoom once per segment, not every frame.
-  let framedLeg: number | null = null;
+  let currentRoute: Waypoint[] = [];
+  // What the camera is currently framed on ('whole' route or a leg index), so we move it once per
+  // transition instead of every frame. A manual user pan/zoom clears it so the next state re-frames.
+  let framed: 'whole' | number | null = null;
 
   function ensureSources() {
     if (!map.getSource('full')) {
@@ -87,7 +91,8 @@ export function createMapView(container: HTMLElement): MapView {
   function fitWhole(wps: Waypoint[]) {
     const b = new maplibregl.LngLatBounds();
     wps.forEach((w) => b.extend([w.lon, w.lat]));
-    map.fitBounds(b, { padding: 80, duration: 600 });
+    map.fitBounds(b, { padding: 80, duration: 900 });
+    framed = 'whole';
   }
 
   // Frame a single leg so it fills the screen; bounds cover the bowed great-circle arc, not just endpoints.
@@ -101,8 +106,21 @@ export function createMapView(container: HTMLElement): MapView {
     onReady(cb) {
       map.on('load', cb);
     },
+    onUserInteract(cb) {
+      // Only fire for user-driven moves (drag/scroll/pinch) — programmatic eases have no originalEvent.
+      map.on('movestart', (e) => {
+        if ((e as { originalEvent?: unknown }).originalEvent) {
+          framed = null;
+          cb();
+        }
+      });
+    },
+    resetView() {
+      if (currentRoute.length) fitWhole(currentRoute);
+    },
     setRoute(wps) {
       if (!map.isStyleLoaded()) return;
+      currentRoute = wps;
       ensureSources();
       (map.getSource('full') as maplibregl.GeoJSONSource).setData(fullRouteFc(wps));
       (map.getSource('dots') as maplibregl.GeoJSONSource).setData(dotsFc(wps));
@@ -159,18 +177,19 @@ export function createMapView(container: HTMLElement): MapView {
         if (planeGlyphEl) planeGlyphEl.style.transform = `rotate(${frame.plane.bearing - 90}deg)`;
       }
 
-      // camera: re-zoom to fill the screen with each new leg as the plane reaches it
-      if (frame.state === 'playing' && frame.activeLegIndex !== null) {
-        if (frame.activeLegIndex !== framedLeg) {
-          framedLeg = frame.activeLegIndex;
+      // camera: whole-route view at idle/lead/done; zoom to fill the screen per leg while flying;
+      // hold the current framing during dwell and the tail pause. Each move fires once per transition.
+      if (frame.state === 'idle' || frame.state === 'lead' || frame.state === 'done') {
+        if (framed !== 'whole') fitWhole(wps);
+      } else if (frame.state === 'playing' && frame.activeLegIndex !== null) {
+        if (framed !== frame.activeLegIndex) {
+          framed = frame.activeLegIndex;
           fitLeg(wps[frame.activeLegIndex], wps[frame.activeLegIndex + 1]);
         }
       }
-      if (frame.state === 'done') { framedLeg = null; fitWhole(wps); }
-      if (frame.state === 'idle') { framedLeg = null; fitWhole(wps); }
     },
     reset() {
-      framedLeg = null;
+      framed = null;
       if (map.getSource('trail')) (map.getSource('trail') as maplibregl.GeoJSONSource).setData(emptyFc());
       labelMarkers.forEach((m) => m.remove());
       labelMarkers.length = 0;

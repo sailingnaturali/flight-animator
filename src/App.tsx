@@ -15,6 +15,7 @@ export default function App() {
   const [waypoints, setWaypoints] = useState<Waypoint[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [userMoved, setUserMoved] = useState(false);
   const { frame, start, reset } = usePlayback(waypoints);
 
   // load airport table + map once
@@ -23,6 +24,7 @@ export default function App() {
     if (mapRef.current && !viewRef.current) {
       viewRef.current = createMapView(mapRef.current);
       viewRef.current.onReady(() => setMapReady(true));
+      viewRef.current.onUserInteract(() => setUserMoved(true));
     }
     return () => {
       viewRef.current?.destroy();
@@ -66,21 +68,31 @@ export default function App() {
     if (waypoints) viewRef.current?.renderFrame(frame, waypoints);
   }, [frame, waypoints]);
 
-  const playing = frame.state === 'countdown' || frame.state === 'playing';
+  // States where the UI chrome hides for a clean recording.
+  const recording = frame.state === 'countdown' || frame.state === 'lead'
+    || frame.state === 'playing' || frame.state === 'tail';
   const canStart = !!resolved && isPlayable(resolved);
+  // Offer a reset only when the user has manually panned/zoomed and we're not mid-recording.
+  const showResetZoom = userMoved && (frame.state === 'idle' || frame.state === 'done');
 
   function onStart() {
     viewRef.current?.reset();
+    setUserMoved(false);
     if (waypoints) viewRef.current?.setRoute(waypoints);
     start();
   }
   function onNewTrip() {
     reset();
     viewRef.current?.reset();
+    setUserMoved(false);
     setInput('');
   }
   function onReplay() {
     onStart();
+  }
+  function onResetZoom() {
+    viewRef.current?.resetView();
+    setUserMoved(false);
   }
   function toggleFullscreen() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
@@ -93,7 +105,11 @@ export default function App() {
 
       <div className="watermark">sailingnaturali.com</div>
 
-      {!playing && frame.state !== 'done' && (
+      {showResetZoom && (
+        <button className="reset-zoom" onClick={onResetZoom}>Reset zoom</button>
+      )}
+
+      {!recording && frame.state !== 'done' && (
         <div className="controls">
           <input
             className="route-input"
