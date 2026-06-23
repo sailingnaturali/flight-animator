@@ -51,6 +51,10 @@ describe('decodeSimple', () => {
     const stops = [{ code: 'SFO' }, { lat: -34.0, lon: 151.0 }];
     expect(decodeSimple(encodeSimple(stops))).toEqual(stops);
   });
+  it('round-trips a coordinate label containing hyphens', () => {
+    const stops = [{ code: 'SFO' }, { lat: 18.59, lon: -72.31, label: 'Port-au-Prince' }];
+    expect(decodeSimple(encodeSimple(stops))).toEqual(stops);
+  });
 });
 
 describe('decodeRich', () => {

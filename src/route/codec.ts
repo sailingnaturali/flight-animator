@@ -11,7 +11,7 @@ function parseStop(token: string): RawStop {
   if (CODE_RE.test(token)) return { code: token.toUpperCase() };
   const [coords, label] = token.split('|');
   const [lat, lon] = coords.split(',').map(Number);
-  return label !== undefined ? { lat, lon, label } : { lat, lon };
+  return label !== undefined ? { lat, lon, label: decodeURIComponent(label) } : { lat, lon };
 }
 
 export function extractRoute(input: string): { form: 'simple' | 'rich'; value: string } | null {
@@ -57,7 +57,7 @@ export function encodeSimple(stops: RawStop[]): string {
     .map((s) =>
       s.code
         ? s.code.toLowerCase()
-        : `${s.lat},${s.lon}${s.label ? `|${s.label}` : ''}`,
+        : `${s.lat},${s.lon}${s.label ? `|${encodeURIComponent(s.label).replace(/-/g, '%2D')}` : ''}`,
     )
     .join('-');
 }

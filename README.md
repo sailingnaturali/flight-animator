@@ -25,7 +25,9 @@ https://flight-animator.vercel.app/?r=sfo-48.76,-122.5|Cabin-sea
 
 Any stop that isn't a known IATA code and matches `lat,lon` (or `-lat,lon` for negative
 latitudes) is treated as a raw coordinate. This is the lat,lon|Label escape hatch for
-locations that don't have an airport code.
+locations that don't have an airport code. Generated and shared simple-form URLs
+percent-encode the label automatically; a hand-typed label containing `-` or `|` should
+be percent-encoded (e.g. `Port%2Dau%2DPrince`) or use the richer `?d=` form instead.
 
 ### `?d=` — rich route (base64-encoded JSON, with dates and labels)
 

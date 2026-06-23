@@ -1,5 +1,7 @@
 // Usage: node scripts/build-airports.mjs
 // Produces public/airports.json from OurAirports (public domain).
+// Dev/CI data-refresh script — run manually to regenerate the committed public/airports.json.
+// NOT part of the Vercel build; the committed file is used directly.
 import { writeFileSync } from 'node:fs';
 
 const URL = 'https://davidmegginson.github.io/ourairports-data/airports.csv';

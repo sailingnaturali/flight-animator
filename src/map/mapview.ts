@@ -136,6 +136,7 @@ export function createMapView(container: HTMLElement): MapView {
           planeMarker = new maplibregl.Marker({ element: planeEl }).setLngLat([frame.plane.lon, frame.plane.lat]).addTo(map);
         }
         planeMarker.setLngLat([frame.plane.lon, frame.plane.lat]);
+        // The ✈ glyph points up (north) at 0°; subtract 90° to align it with the great-circle bearing convention where 0° = east.
         if (planeEl) planeEl.style.transform = `rotate(${frame.plane.bearing - 90}deg)`;
       }
 
