@@ -43,8 +43,9 @@ html, body, #root { margin: 0; height: 100%; background: #0b0e14; }
   backdrop-filter: blur(6px);
 }
 .stop-label {
-  color: #fff; font: 600 13px system-ui, sans-serif; white-space: nowrap;
-  text-shadow: 0 1px 4px #000, 0 0 8px #000; pointer-events: none;
+  color: #0c1018; font: 600 13px system-ui, sans-serif; white-space: nowrap;
+  background: #fff; padding: 3px 9px; border-radius: 6px;
+  box-shadow: 0 1px 8px rgba(0,0,0,.55); pointer-events: none;
 }
 
 /* Persistent brand watermark link — always visible, including during recording. */
