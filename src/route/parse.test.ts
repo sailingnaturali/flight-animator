@@ -30,6 +30,21 @@ describe('resolveStops', () => {
     expect(waypoints).toHaveLength(1);
     expect(errors[0]).toContain('ZZZ');
   });
+  it('uses embedded coordinates over the table when a stop has both a code and lat/lon', () => {
+    const { waypoints, errors } = resolveStops([{ code: 'SFO', lat: 37.0, lon: -122.0 }], table);
+    expect(errors).toEqual([]);
+    expect(waypoints[0]).toMatchObject({ lat: 37.0, lon: -122.0, code: 'SFO', country: 'US' });
+  });
+  it('keeps a stop with an unknown code but valid coordinates (no error, not dropped)', () => {
+    const { waypoints, errors } = resolveStops([{ code: 'ZZZ', lat: 10, lon: 20, label: 'Mystery' }], table);
+    expect(errors).toEqual([]);
+    expect(waypoints).toHaveLength(1);
+    expect(waypoints[0]).toMatchObject({ lat: 10, lon: 20, code: 'ZZZ', label: 'Mystery' });
+  });
+  it('labels a code+coords stop from the table city when no label is given and the code is known', () => {
+    const { waypoints } = resolveStops([{ code: 'SFO', lat: 37.0, lon: -122.0 }], table);
+    expect(waypoints[0].label).toBe('San Francisco');
+  });
 });
 
 describe('isPlayable', () => {
