@@ -1,7 +1,9 @@
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; background: #0b0e14; }
 .app { position: fixed; inset: 0; }
-.map { position: absolute; inset: 0; }
+/* Two-class specificity so this beats MapLibre's `.maplibregl-map { position: relative }`
+   (injected after our CSS); otherwise the container collapses to height:0 and the map can't paint. */
+.app .map { position: absolute; inset: 0; }
 
 .controls {
   position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
