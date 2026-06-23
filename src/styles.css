@@ -1,0 +1,34 @@
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; background: #0b0e14; }
+.app { position: fixed; inset: 0; }
+.map { position: absolute; inset: 0; }
+
+.controls {
+  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center;
+  padding: 10px; background: rgba(12,16,24,.8); border-radius: 12px; backdrop-filter: blur(6px);
+  max-width: 92vw;
+}
+.controls.done { gap: 12px; }
+.route-input {
+  min-width: 260px; padding: 10px 12px; border-radius: 8px; border: 1px solid #2a3550;
+  background: #0e1422; color: #e8eef7; font-size: 16px;
+}
+.btn {
+  padding: 10px 16px; border-radius: 8px; border: 1px solid #2a3550;
+  background: #16203a; color: #e8eef7; font-size: 16px; cursor: pointer;
+}
+.btn.primary { background: #ff5a4d; border-color: #ff5a4d; color: #1a0f0e; font-weight: 600; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.error { width: 100%; text-align: center; color: #ff9a90; font-size: 13px; }
+
+.countdown {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 22vmin; color: #fff; text-shadow: 0 0 30px rgba(255,90,77,.6); pointer-events: none;
+}
+
+.plane { font-size: 22px; line-height: 1; filter: drop-shadow(0 0 6px rgba(255,90,77,.8)); }
+.stop-label {
+  color: #fff; font: 600 13px system-ui, sans-serif; white-space: nowrap;
+  text-shadow: 0 1px 4px #000, 0 0 8px #000; pointer-events: none;
+}

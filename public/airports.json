@@ -1,0 +1,8 @@
+{
+  "SFO": { "city": "San Francisco", "country": "US", "lat": 37.6213, "lon": -122.379 },
+  "LHR": { "city": "London", "country": "GB", "lat": 51.4700, "lon": -0.4543 },
+  "CDG": { "city": "Paris", "country": "FR", "lat": 49.0097, "lon": 2.5479 },
+  "JFK": { "city": "New York", "country": "US", "lat": 40.6413, "lon": -73.7781 },
+  "NRT": { "city": "Tokyo", "country": "JP", "lat": 35.7720, "lon": 140.3929 },
+  "SEA": { "city": "Seattle", "country": "US", "lat": 47.4502, "lon": -122.3088 }
+}
