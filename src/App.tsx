@@ -14,6 +14,7 @@ export default function App() {
   const [input, setInput] = useState('');
   const [waypoints, setWaypoints] = useState<Waypoint[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const { frame, start, reset } = usePlayback(waypoints);
 
   // load airport table + map once
@@ -21,7 +22,12 @@ export default function App() {
     loadAirports().then(setTable).catch(() => setError('Could not load airport data.'));
     if (mapRef.current && !viewRef.current) {
       viewRef.current = createMapView(mapRef.current);
+      viewRef.current.onReady(() => setMapReady(true));
     }
+    return () => {
+      viewRef.current?.destroy();
+      viewRef.current = null;
+    };
   }, []);
 
   // pre-fill from the URL once the table is ready
@@ -48,13 +54,12 @@ export default function App() {
     if (resolved && isPlayable(resolved)) {
       setWaypoints(resolved.waypoints);
       setError(null);
-      viewRef.current?.onReady(() => viewRef.current?.setRoute(resolved.waypoints));
-      viewRef.current?.setRoute(resolved.waypoints);
+      if (mapReady) viewRef.current?.setRoute(resolved.waypoints);
     } else {
       setWaypoints(null);
       setError(resolved?.errors[0] ?? null);
     }
-  }, [resolved]);
+  }, [resolved, mapReady]);
 
   // push frames to the map
   useEffect(() => {

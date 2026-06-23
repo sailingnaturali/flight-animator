@@ -34,6 +34,7 @@ export function usePlayback(waypoints: Waypoint[] | null) {
   return {
     frame,
     start() {
+      cancelAnimationFrame(rafRef.current);
       pbRef.current?.start(performance.now());
       rafRef.current = requestAnimationFrame(loop);
     },
