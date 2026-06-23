@@ -8,6 +8,18 @@ stamps. No server, no sign-in — just a URL.
 
 Live at **[flights.sailingnaturali.com](https://flights.sailingnaturali.com)**.
 
+## Why this exists
+
+This is **mostly for fun** — a little travel-storytelling toy. The point is to turn a trip
+into a clean, cinematic map animation you can **screen-record and narrate over** (e.g. for our
+Amsterdam boat-building inspection trips). Recordability is the north star: playback stays free
+of on-screen UI chrome, with a short countdown lead-in so you can start a recording before the
+animation begins.
+
+Feature suggestions are welcome — but the core has to remain something designed to be
+**recorded for video with a voiceover**. Anything that adds chrome to the playback frame or
+breaks a clean capture works against that.
+
 ## URL formats
 
 Two interchangeable query-string formats drive the animation. Either can be pasted into the
