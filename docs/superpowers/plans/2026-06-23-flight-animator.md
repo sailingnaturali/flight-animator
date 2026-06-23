@@ -23,7 +23,7 @@
 ### Task 1: Project scaffold
 
 **Files:**
-- Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `tsconfig.node.json`, `index.html`, `src/main.tsx`, `src/App.tsx`, `vitest.config.ts`, `.eslintrc.cjs`, `src/smoke.test.ts`, `.github/workflows/ci.yml`
+- Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `tsconfig.node.json`, `index.html`, `src/main.tsx`, `src/App.tsx`, `vitest.config.ts`, `.eslintrc.cjs`, `src/smoke.test.ts`, `.github/workflows/ci.yml`, `.github/dependabot.yml`
 
 **Interfaces:**
 - Produces: a buildable, testable repo. `npm test`, `npm run build`, `npm run lint` all pass.
@@ -195,8 +195,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -206,16 +206,43 @@ jobs:
       - run: npm run build
 ```
 
-- [ ] **Step 6: Install and verify**
+> Action versions match the signalk-plugin repos (`checkout@v7`, `setup-node@v6`); Dependabot (next step) keeps them current.
+
+- [ ] **Step 6: Add the GitHub Actions updater**
+
+`.github/dependabot.yml` — mirrors the signalk-plugin repos: one grouped weekly PR that bumps every action we use. (Adds an `npm` group too, since this repo carries app dependencies the plugin repos don't.)
+```yaml
+version: 2
+updates:
+  # Keeps every GitHub Action we use current in a single grouped weekly PR.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns:
+          - "*"
+```
+
+- [ ] **Step 7: Install and verify**
 
 Run: `npm install && npm test && npm run build`
 Expected: test passes (1 file, 1 test), build produces `dist/`.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A
-git commit -m "chore: scaffold Vite + React + TS + Vitest project"
+git commit -m "chore: scaffold Vite + React + TS + Vitest project + CI + dependabot"
 ```
 
 ---
