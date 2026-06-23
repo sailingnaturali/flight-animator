@@ -31,6 +31,18 @@ export function interpolate(a: LngLat, b: LngLat, f: number): LngLat {
   };
 }
 
+/**
+ * Shift `lon` by whole turns of 360° until it is within 180° of `refLon`. Keeps a polyline
+ * (or a set of bounds) continuous across the ±180° antimeridian instead of jumping ~360°
+ * between consecutive points. The result may fall outside [-180, 180]; MapLibre renders such
+ * longitudes correctly across the seam, and fitBounds then centers on the shorter span.
+ */
+export function unwrapLongitude(lon: number, refLon: number): number {
+  while (lon - refLon > 180) lon -= 360;
+  while (lon - refLon < -180) lon += 360;
+  return lon;
+}
+
 export function bearing(a: LngLat, b: LngLat, f: number): number {
   // bearing from the interpolated point toward a slightly-further point
   const p = interpolate(a, b, f);

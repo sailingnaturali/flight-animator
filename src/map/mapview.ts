@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Waypoint } from '../route/types';
 import type { Frame } from '../play/controller';
-import { interpolate } from '../geo/greatcircle';
+import { interpolate, unwrapLongitude } from '../geo/greatcircle';
 
 const DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 // Google-nav style: the not-yet-flown path is blue, the flown path behind the plane is gray.
@@ -20,11 +20,7 @@ function arcLine(a: Waypoint, b: Waypoint, upTo = 1): [number, number][] {
     // Unwrap longitude so an antimeridian (±180°) crossing stays continuous instead of
     // jumping ~360° and drawing a horizontal line across the map. MapLibre renders the
     // out-of-range longitudes correctly across the seam.
-    let lon = p.lon;
-    if (prevLon !== null) {
-      while (lon - prevLon > 180) lon -= 360;
-      while (lon - prevLon < -180) lon += 360;
-    }
+    const lon: number = prevLon === null ? p.lon : unwrapLongitude(p.lon, prevLon);
     prevLon = lon;
     pts.push([lon, p.lat]);
   }
@@ -99,8 +95,15 @@ export function createMapView(container: HTMLElement): MapView {
   }
 
   function fitWhole(wps: Waypoint[]) {
+    // Unwrap each stop's longitude along the route so a Pacific-spanning trip frames the
+    // shorter span (centered on the Pacific) instead of the long way around the globe.
     const b = new maplibregl.LngLatBounds();
-    wps.forEach((w) => b.extend([w.lon, w.lat]));
+    let prevLon: number | null = null;
+    for (const w of wps) {
+      const lon: number = prevLon === null ? w.lon : unwrapLongitude(w.lon, prevLon);
+      prevLon = lon;
+      b.extend([lon, w.lat]);
+    }
     map.fitBounds(b, { padding: 80, duration: 900 });
     framed = 'whole';
   }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { distanceKm, interpolate, bearing } from './greatcircle';
+import { distanceKm, interpolate, bearing, unwrapLongitude } from './greatcircle';
 
 const SFO = { lat: 37.62, lon: -122.38 };
 const LHR = { lat: 51.47, lon: -0.45 };
@@ -30,5 +30,18 @@ describe('bearing', () => {
     const b = bearing(SFO, LHR, 0);
     expect(b).toBeGreaterThan(20);
     expect(b).toBeLessThan(60);
+  });
+});
+
+describe('unwrapLongitude', () => {
+  it('leaves a longitude within 180 of the reference unchanged', () => {
+    expect(unwrapLongitude(-74, -122)).toBe(-74);
+    expect(unwrapLongitude(2.35, -0.45)).toBe(2.35);
+  });
+  it('shifts a longitude across the antimeridian to stay within 180 of the reference', () => {
+    // EWR (-74) -> NGS (129.7): the short way is westward, so NGS unwraps to ~-230.3
+    expect(unwrapLongitude(129.7, -74)).toBeCloseTo(-230.3, 4);
+    expect(unwrapLongitude(-179, 179)).toBe(181);
+    expect(unwrapLongitude(179, -179)).toBe(-181);
   });
 });
