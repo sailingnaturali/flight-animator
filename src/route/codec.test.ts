@@ -37,6 +37,20 @@ describe('decodeSimple', () => {
   it('throws on an incomplete coordinate token', () => {
     expect(() => decodeSimple('48.76,')).toThrow();
   });
+  it('decodes a negative-latitude coordinate stop', () => {
+    expect(decodeSimple('sfo--34.0,151.0')).toEqual([
+      { code: 'SFO' }, { lat: -34.0, lon: 151.0 },
+    ]);
+  });
+  it('decodes a stop with negative latitude and longitude', () => {
+    expect(decodeSimple('sfo--34.0,-58.0')).toEqual([
+      { code: 'SFO' }, { lat: -34.0, lon: -58.0 },
+    ]);
+  });
+  it('round-trips a label-less coordinate stop (no synthesized label)', () => {
+    const stops = [{ code: 'SFO' }, { lat: -34.0, lon: 151.0 }];
+    expect(decodeSimple(encodeSimple(stops))).toEqual(stops);
+  });
 });
 
 describe('decodeRich', () => {

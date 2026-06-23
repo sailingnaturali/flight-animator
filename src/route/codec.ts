@@ -11,8 +11,7 @@ function parseStop(token: string): RawStop {
   if (CODE_RE.test(token)) return { code: token.toUpperCase() };
   const [coords, label] = token.split('|');
   const [lat, lon] = coords.split(',').map(Number);
-  const stop: RawStop = { lat, lon, label: label ?? `${lat},${lon}` };
-  return stop;
+  return label !== undefined ? { lat, lon, label } : { lat, lon };
 }
 
 export function extractRoute(input: string): { form: 'simple' | 'rich'; value: string } | null {
@@ -33,14 +32,23 @@ export function decodeSimple(value: string): RawStop[] {
   const parts = value.split('-');
   const stops: RawStop[] = [];
   let cur = '';
+  let pendingSign = false;
   for (const part of parts) {
-    cur = cur === '' ? part : `${cur}-${part}`;
+    // An empty split-part means two '-' were adjacent: a stop separator
+    // immediately followed by a negative sign. Remember the sign for the next part.
+    if (part === '' && cur === '') {
+      pendingSign = true;
+      continue;
+    }
+    const piece = pendingSign ? `-${part}` : part;
+    pendingSign = false;
+    cur = cur === '' ? piece : `${cur}-${piece}`;
     if (isCompleteStop(cur)) {
       stops.push(parseStop(cur));
       cur = '';
     }
   }
-  if (cur !== '') throw new Error(`Incomplete stop in route: "${cur}"`);
+  if (cur !== '' || pendingSign) throw new Error(`Incomplete stop in route: "${cur}"`);
   return stops;
 }
 
