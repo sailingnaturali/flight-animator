@@ -6,6 +6,22 @@ import { loadAirports } from './route/airports';
 import type { AirportTable, Waypoint, RawStop } from './route/types';
 import { createMapView, type MapView } from './map/mapview';
 import { usePlayback } from './usePlayback';
+import { tripTotals, formatDistance, formatDuration, type DistanceUnit } from './geo/legstats';
+
+const UNITS: DistanceUnit[] = ['km', 'mi', 'nm'];
+const isUnit = (v: string): v is DistanceUnit => (UNITS as string[]).includes(v);
+
+// "19,432 km · 38h 10m flying · 6d 4h total" — distance always; times only when the route carries
+// them. The elapsed "total" is dropped when it adds nothing over the flying time (no real layovers).
+function totalSummary(waypoints: Waypoint[], units: DistanceUnit): string {
+  const { distanceKm, airMs, elapsedMs } = tripTotals(waypoints);
+  const parts = [formatDistance(distanceKm, units)];
+  if (airMs !== null) parts.push(`${formatDuration(airMs)} flying`);
+  if (elapsedMs !== null && (airMs === null || elapsedMs - airMs > 60_000)) {
+    parts.push(`${formatDuration(elapsedMs)} total`);
+  }
+  return parts.join(' · ');
+}
 
 export default function App() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -19,6 +35,7 @@ export default function App() {
   // Stops decoded from a rich `?d=` link. We show the friendly code form in the input but keep the
   // rich payload (embedded coords + dates for dwell) as the route source until the user edits it.
   const [richRaw, setRichRaw] = useState<RawStop[] | null>(null);
+  const [units, setUnits] = useState<DistanceUnit>('km');
   const { frame, start, reset } = usePlayback(waypoints);
 
   // load airport table + map once
@@ -38,7 +55,11 @@ export default function App() {
   // pre-fill from the URL once the table is ready
   useEffect(() => {
     if (!table) return;
-    const r = extractRoute(window.location.search || window.location.hash.replace('#', ''));
+    const search = window.location.search || window.location.hash.replace('#', '');
+    // Honor a units preference from the link (e.g. &u=mi) so a shared/recorded route reproduces it.
+    const u = new URLSearchParams(search).get('u');
+    if (u && isUnit(u)) setUnits(u);
+    const r = extractRoute(search);
     if (!r) return;
     if (r.form === 'rich') {
       // Show the friendly code form (e.g. "yyj-yvr-den") instead of the raw base64 blob, but keep
@@ -90,6 +111,11 @@ export default function App() {
     if (waypoints) viewRef.current?.renderFrame(frame, waypoints);
   }, [frame, waypoints]);
 
+  // keep the map's leg chips in the chosen units
+  useEffect(() => {
+    if (mapReady) viewRef.current?.setUnits(units);
+  }, [units, mapReady]);
+
   // Esc stops playback and returns to the input; the route stays drawn for a fresh start.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -109,6 +135,10 @@ export default function App() {
   const canStart = !!resolved && isPlayable(resolved);
   // Offer a reset only when the user has manually panned/zoomed and we're not mid-recording.
   const showResetZoom = userMoved && (frame.state === 'idle' || frame.state === 'done');
+  // Whole-trip total bookends the animation: shown on the intro/outro holds, hidden while flying.
+  const showTotal = !!waypoints
+    && (frame.state === 'idle' || frame.state === 'lead' || frame.state === 'tail' || frame.state === 'done');
+  const total = useMemo(() => (waypoints ? totalSummary(waypoints, units) : ''), [waypoints, units]);
 
   function onStart() {
     viewRef.current?.reset();
@@ -140,6 +170,8 @@ export default function App() {
 
       <a className="watermark" href="https://sailingnaturali.com" target="_blank" rel="noopener noreferrer">sailingnaturali.com</a>
 
+      {showTotal && <div className="trip-total">{total}</div>}
+
       {showResetZoom && (
         <button className="reset-zoom" onClick={onResetZoom}>Reset zoom</button>
       )}
@@ -152,6 +184,18 @@ export default function App() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
+          <div className="units-toggle" role="group" aria-label="Distance units">
+            {UNITS.map((u) => (
+              <button
+                key={u}
+                className={`unit${u === units ? ' active' : ''}`}
+                aria-pressed={u === units}
+                onClick={() => setUnits(u)}
+              >
+                {u}
+              </button>
+            ))}
+          </div>
           <button className="btn primary" disabled={!canStart} onClick={onStart}>Start</button>
           <button className="btn" onClick={toggleFullscreen} aria-label="Fullscreen">⛶</button>
           {error && <div className="error">{error}</div>}

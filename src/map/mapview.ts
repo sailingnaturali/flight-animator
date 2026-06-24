@@ -3,7 +3,8 @@ import type * as GeoJSON from 'geojson';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Waypoint } from '../route/types';
 import type { Frame } from '../play/controller';
-import { interpolate, unwrapLongitude } from '../geo/greatcircle';
+import { interpolate, unwrapLongitude, distanceKm } from '../geo/greatcircle';
+import { formatDistance, formatDuration, legFlightMs, type DistanceUnit } from '../geo/legstats';
 
 const DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 // Google-nav style: the not-yet-flown path is blue, the flown path behind the plane is gray.
@@ -31,6 +32,7 @@ function arcLine(a: Waypoint, b: Waypoint, upTo = 1): [number, number][] {
 export interface MapView {
   onReady(cb: () => void): void;
   onUserInteract(cb: () => void): void;
+  setUnits(unit: DistanceUnit): void;
   setRoute(waypoints: Waypoint[]): void;
   renderFrame(frame: Frame, waypoints: Waypoint[]): void;
   resetView(): void;
@@ -51,6 +53,9 @@ export function createMapView(container: HTMLElement): MapView {
   let planeGlyphEl: HTMLElement | null = null;
   let planeMarker: maplibregl.Marker | null = null;
   const labelMarkers: maplibregl.Marker[] = [];
+  // Per-leg "distance · time" chips, indexed by the leg's from-index. Revealed progressively.
+  const legLabelMarkers: maplibregl.Marker[] = [];
+  let units: DistanceUnit = 'km';
   let currentRoute: Waypoint[] = [];
   // What the camera is currently framed on ('whole' route or a leg index), so we move it once per
   // transition instead of every frame. A manual user pan/zoom clears it so the next state re-frames.
@@ -109,6 +114,23 @@ export function createMapView(container: HTMLElement): MapView {
     framed = 'whole';
   }
 
+  // Midpoint of the bowed great-circle arc (already longitude-unwrapped), where the leg chip sits.
+  function arcMidpoint(a: Waypoint, b: Waypoint): [number, number] {
+    const arc = arcLine(a, b);
+    return arc[Math.floor(arc.length / 2)];
+  }
+
+  function legLabelText(wps: Waypoint[], i: number): string {
+    const dist = formatDistance(distanceKm(wps[i], wps[i + 1]), units);
+    const ms = legFlightMs(wps[i], wps[i + 1]);
+    return ms === null ? dist : `${dist} · ${formatDuration(ms)}`;
+  }
+
+  function clearLegLabels() {
+    legLabelMarkers.forEach((m) => m?.remove());
+    legLabelMarkers.length = 0;
+  }
+
   // Frame a single leg so it fills the screen; bounds cover the bowed great-circle arc, not just endpoints.
   function fitLeg(a: Waypoint, b: Waypoint) {
     const bounds = new maplibregl.LngLatBounds();
@@ -129,6 +151,13 @@ export function createMapView(container: HTMLElement): MapView {
         }
       });
     },
+    setUnits(unit) {
+      units = unit;
+      // Re-label any leg chips already on the map so the toggle updates live.
+      legLabelMarkers.forEach((m, i) => {
+        if (m) m.getElement().textContent = legLabelText(currentRoute, i);
+      });
+    },
     resetView() {
       if (currentRoute.length) fitWhole(currentRoute);
     },
@@ -141,6 +170,7 @@ export function createMapView(container: HTMLElement): MapView {
       (map.getSource('trail') as maplibregl.GeoJSONSource).setData(emptyFc());
       labelMarkers.forEach((m) => m.remove());
       labelMarkers.length = 0;
+      clearLegLabels();
       fitWhole(wps);
     },
     renderFrame(frame, wps) {
@@ -160,6 +190,18 @@ export function createMapView(container: HTMLElement): MapView {
         feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: arcLine(a, b, frame.activeLegFraction) }, properties: {} });
       }
       (map.getSource('trail') as maplibregl.GeoJSONSource).setData({ type: 'FeatureCollection', features: feats });
+
+      // per-leg distance · time chips at the arc midpoint, revealed once a leg is active or flown.
+      for (let i = 0; i < wps.length - 1; i++) {
+        const revealed = frame.activeLegIndex === i || frame.arrivedIndices.includes(i + 1);
+        if (revealed && !legLabelMarkers[i]) {
+          const el = document.createElement('div');
+          el.className = 'leg-label';
+          el.textContent = legLabelText(wps, i);
+          legLabelMarkers[i] = new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat(arcMidpoint(wps[i], wps[i + 1])).addTo(map);
+        }
+      }
 
       // labels for arrived stops
       for (const i of frame.arrivedIndices) {
@@ -207,6 +249,7 @@ export function createMapView(container: HTMLElement): MapView {
       if (map.getSource('trail')) (map.getSource('trail') as maplibregl.GeoJSONSource).setData(emptyFc());
       labelMarkers.forEach((m) => m.remove());
       labelMarkers.length = 0;
+      clearLegLabels();
       if (planeMarker) { planeMarker.remove(); planeMarker = null; planeEl = null; planeGlyphEl = null; }
     },
     destroy() {
