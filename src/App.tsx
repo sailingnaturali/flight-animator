@@ -7,6 +7,7 @@ import type { AirportTable, Waypoint, RawStop } from './route/types';
 import { createMapView, type MapView } from './map/mapview';
 import { usePlayback } from './usePlayback';
 import { tripTotals, formatDistance, formatDuration, type DistanceUnit } from './geo/legstats';
+import { buildSharePath } from './route/share';
 
 const UNITS: DistanceUnit[] = ['km', 'mi', 'nm'];
 const isUnit = (v: string): v is DistanceUnit => (UNITS as string[]).includes(v);
@@ -36,6 +37,7 @@ export default function App() {
   // rich payload (embedded coords + dates for dwell) as the route source until the user edits it.
   const [richRaw, setRichRaw] = useState<RawStop[] | null>(null);
   const [units, setUnits] = useState<DistanceUnit>('km');
+  const [copied, setCopied] = useState(false);
   const { frame, start, reset } = usePlayback(waypoints);
 
   // load airport table + map once
@@ -163,6 +165,15 @@ export default function App() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
     else document.exitFullscreen?.();
   }
+  function onShare() {
+    const path = buildSharePath(richRaw, input, units);
+    if (!path) return;
+    const url = `${window.location.origin}${window.location.pathname}${path}`;
+    navigator.clipboard?.writeText(url).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    });
+  }
 
   return (
     <div className="app">
@@ -197,6 +208,7 @@ export default function App() {
             ))}
           </div>
           <button className="btn primary" disabled={!canStart} onClick={onStart}>Start</button>
+          <button className="btn" disabled={!canStart} onClick={onShare}>{copied ? 'Copied!' : 'Share'}</button>
           <button className="btn" onClick={toggleFullscreen} aria-label="Fullscreen">⛶</button>
           {error && <div className="error">{error}</div>}
         </div>
@@ -210,6 +222,7 @@ export default function App() {
         <div className="controls done">
           <button className="btn primary" onClick={onReplay}>Replay</button>
           <button className="btn" onClick={onNewTrip}>New trip</button>
+          <button className="btn" onClick={onShare}>{copied ? 'Copied!' : 'Share'}</button>
         </div>
       )}
     </div>

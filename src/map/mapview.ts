@@ -5,6 +5,7 @@ import type { Waypoint } from '../route/types';
 import type { Frame } from '../play/controller';
 import { interpolate, unwrapLongitude, distanceKm } from '../geo/greatcircle';
 import { formatDistance, formatDuration, legFlightMs, type DistanceUnit } from '../geo/legstats';
+import { stackVertically, type Rect } from '../geo/labelstack';
 
 const DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 // Google-nav style: the not-yet-flown path is blue, the flown path behind the plane is gray.
@@ -130,6 +131,24 @@ export function createMapView(container: HTMLElement): MapView {
     legLabelMarkers.forEach((m) => m?.remove());
     legLabelMarkers.length = 0;
   }
+
+  // Spread clustered labels apart once a view settles: stop pills carry a base [8,0] offset (anchored
+  // left of the dot), leg chips none. We reset to base, measure the on-screen boxes, then push
+  // overlapping ones down. At leg-zoom nothing overlaps, so this only acts on the whole-route view.
+  function decollideLabels() {
+    const entries: { marker: maplibregl.Marker; base: [number, number] }[] = [];
+    labelMarkers.forEach((m) => { if (m) entries.push({ marker: m, base: [8, 0] }); });
+    legLabelMarkers.forEach((m) => { if (m) entries.push({ marker: m, base: [0, 0] }); });
+    if (entries.length < 2) return;
+    entries.forEach((e) => e.marker.setOffset(e.base));
+    const rects: Rect[] = entries.map((e) => {
+      const b = e.marker.getElement().getBoundingClientRect();
+      return { left: b.left, top: b.top, right: b.right, bottom: b.bottom };
+    });
+    const dy = stackVertically(rects, 4);
+    entries.forEach((e, i) => e.marker.setOffset([e.base[0], e.base[1] + dy[i]]));
+  }
+  map.on('idle', decollideLabels);
 
   // Frame a single leg so it fills the screen; bounds cover the bowed great-circle arc, not just endpoints.
   function fitLeg(a: Waypoint, b: Waypoint) {
