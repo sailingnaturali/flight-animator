@@ -55,23 +55,16 @@ html, body, #root { margin: 0; height: 100%; background: #0b0e14; }
   border: 1px solid rgba(120,140,180,.28); backdrop-filter: blur(2px); pointer-events: none;
 }
 
-/* Whole-trip total, a centered title card on the intro/outro holds. */
+/* Whole-trip total, a centered title card on the intro/outro holds. Clicking it cycles the
+   distance units (km -> mi -> nm), which keeps the chrome minimal — no separate unit toggle. */
 .trip-total {
   position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 6;
   padding: 8px 16px; border-radius: 10px; border: 1px solid #2a3550;
   background: rgba(12,16,24,.82); color: #e8eef7; backdrop-filter: blur(6px);
   font: 600 14px/1.2 system-ui, sans-serif; white-space: nowrap; letter-spacing: .01em;
-  text-align: center; max-width: 92vw; pointer-events: none;
+  text-align: center; max-width: 92vw; cursor: pointer;
 }
-
-/* Segmented km / mi / nm control in the entry row. */
-.units-toggle { display: inline-flex; border: 1px solid #2a3550; border-radius: 8px; overflow: hidden; }
-.unit {
-  padding: 10px 12px; border: 0; border-left: 1px solid #2a3550;
-  background: #0e1422; color: #8ea0bd; font-size: 14px; cursor: pointer;
-}
-.unit:first-child { border-left: 0; }
-.unit.active { background: #16203a; color: #e8eef7; font-weight: 600; }
+.trip-total:hover { border-color: #41557f; color: #fff; }
 
 /* Persistent brand watermark link — always visible, including during recording. */
 .watermark {

@@ -181,7 +181,15 @@ export default function App() {
 
       <a className="watermark" href="https://sailingnaturali.com" target="_blank" rel="noopener noreferrer">sailingnaturali.com</a>
 
-      {showTotal && <div className="trip-total">{total}</div>}
+      {showTotal && (
+        <button
+          className="trip-total"
+          title="Click to change units (km / mi / nm)"
+          onClick={() => setUnits((u) => UNITS[(UNITS.indexOf(u) + 1) % UNITS.length])}
+        >
+          {total}
+        </button>
+      )}
 
       {showResetZoom && (
         <button className="reset-zoom" onClick={onResetZoom}>Reset zoom</button>
@@ -195,20 +203,7 @@ export default function App() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-          <div className="units-toggle" role="group" aria-label="Distance units">
-            {UNITS.map((u) => (
-              <button
-                key={u}
-                className={`unit${u === units ? ' active' : ''}`}
-                aria-pressed={u === units}
-                onClick={() => setUnits(u)}
-              >
-                {u}
-              </button>
-            ))}
-          </div>
           <button className="btn primary" disabled={!canStart} onClick={onStart}>Start</button>
-          <button className="btn" disabled={!canStart} onClick={onShare}>{copied ? 'Copied!' : 'Share'}</button>
           <button className="btn" onClick={toggleFullscreen} aria-label="Fullscreen">⛶</button>
           {error && <div className="error">{error}</div>}
         </div>
