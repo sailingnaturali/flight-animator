@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createShortRoute } from './_lib/shorten';
-import { kvStore, type RouteStore } from './_lib/store';
+import { createShortRoute } from './_lib/shorten.js';
+import { kvStore, type RouteStore } from './_lib/store.js';
 
 export function makeShortenHandler(store: RouteStore) {
   return async function handler(req: VercelRequest, res: VercelResponse) {

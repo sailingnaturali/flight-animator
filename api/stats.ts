@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { kvStore, type RouteStore } from './_lib/store';
+import { kvStore, type RouteStore } from './_lib/store.js';
 
 export function makeStatsHandler(store: RouteStore, token: string) {
   return async function handler(req: VercelRequest, res: VercelResponse) {

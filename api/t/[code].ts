@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { summarize } from '../_lib/shortcode';
-import { injectMeta, notFoundHtml } from '../_lib/render';
-import { kvStore, type RouteStore } from '../_lib/store';
+import { summarize } from '../_lib/shortcode.js';
+import { injectMeta, notFoundHtml } from '../_lib/render.js';
+import { kvStore, type RouteStore } from '../_lib/store.js';
 
 const OG_IMAGE = 'https://flights.sailingnaturali.com/og-default.png';
 

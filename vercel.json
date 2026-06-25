@@ -2,7 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/t/[code].ts": { "includeFiles": "dist/index.html" }
+    "api/t/*.ts": { "includeFiles": "dist/index.html" }
   },
   "rewrites": [
     { "source": "/t/:code", "destination": "/api/t/:code" },

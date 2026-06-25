@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { decodeRich } from '../../src/route/codec';
-import type { RawStop } from '../../src/route/types';
+import { decodeRich } from '../../src/route/codec.js';
+import type { RawStop } from '../../src/route/types.js';
 
 const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const CODE_LEN = 12;

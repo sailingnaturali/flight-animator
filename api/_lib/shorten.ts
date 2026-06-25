@@ -1,5 +1,5 @@
-import { fullCode, validate } from './shortcode';
-import type { RouteStore } from './store';
+import { fullCode, validate } from './shortcode.js';
+import type { RouteStore } from './store.js';
 
 export interface ShortenResult {
   ok: boolean;
