@@ -9,6 +9,7 @@ import { usePlayback } from './usePlayback';
 import { routeSearch } from './route/source';
 import { tripTotals, formatDistance, formatDuration, type DistanceUnit } from './geo/legstats';
 import { buildSharePath } from './route/share';
+import { shortenShareUrl } from './route/shareClient';
 
 const UNITS: DistanceUnit[] = ['km', 'mi', 'nm'];
 const isUnit = (v: string): v is DistanceUnit => (UNITS as string[]).includes(v);
@@ -167,14 +168,14 @@ export default function App() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
     else document.exitFullscreen?.();
   }
-  function onShare() {
+  async function onShare() {
     const path = buildSharePath(richRaw, input, units);
     if (!path) return;
-    const url = `${window.location.origin}${window.location.pathname}${path}`;
-    navigator.clipboard?.writeText(url).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    });
+    const longUrl = `${window.location.origin}${window.location.pathname}${path}`;
+    const url = await shortenShareUrl(longUrl, path);
+    await navigator.clipboard?.writeText(url);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
   }
 
   return (
