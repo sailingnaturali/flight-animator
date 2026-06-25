@@ -6,6 +6,7 @@ import { loadAirports } from './route/airports';
 import type { AirportTable, Waypoint, RawStop } from './route/types';
 import { createMapView, type MapView } from './map/mapview';
 import { usePlayback } from './usePlayback';
+import { routeSearch } from './route/source';
 import { tripTotals, formatDistance, formatDuration, type DistanceUnit } from './geo/legstats';
 import { buildSharePath } from './route/share';
 
@@ -57,7 +58,8 @@ export default function App() {
   // pre-fill from the URL once the table is ready
   useEffect(() => {
     if (!table) return;
-    const search = window.location.search || window.location.hash.replace('#', '');
+    const injected = (window as Window & { __FLIGHT_ROUTE__?: string }).__FLIGHT_ROUTE__;
+    const search = routeSearch(injected, window.location.search, window.location.hash);
     // Honor a units preference from the link (e.g. &u=mi) so a shared/recorded route reproduces it.
     const u = new URLSearchParams(search).get('u');
     if (u && isUnit(u)) setUnits(u);
