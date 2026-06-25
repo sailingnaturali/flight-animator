@@ -13,8 +13,15 @@ export function makeRouteHandler(store: RouteStore, template: string) {
     const d = await store.getRoute(code);
     if (!d) return res.status(404).setHeader('content-type', 'text/html').send(notFoundHtml());
     store.incrHits(code).catch(() => {}); // best effort; never blocks the page
-    const { title, description } = summarize(d);
-    const html = injectMeta(template, { title, description, d, image: OG_IMAGE });
+    let html: string;
+    try {
+      const { title, description } = summarize(d);
+      html = injectMeta(template, { title, description, d, image: OG_IMAGE });
+    } catch {
+      // Stored payload failed to decode (corrupt or legacy KV value). Still serve the app shell with
+      // the route injected so it can attempt to boot — just without a per-trip OG card.
+      html = injectMeta(template, { title: 'Flight Animator', description: 'sailingnaturali.com', d, image: OG_IMAGE });
+    }
     return res.status(200).setHeader('content-type', 'text/html').send(html);
   };
 }

@@ -39,4 +39,12 @@ describe('GET /t/[code]', () => {
     await makeRouteHandler(memStore(), TEMPLATE)({ query: { code: 'nope' } } as any, res as any);
     expect(res.statusCode).toBe(404);
   });
+  it('serves the app shell (no card) when the stored payload cannot be decoded', async () => {
+    const store = memStore();
+    await store.putRouteIfAbsent('corrupt1', 'not-a-valid-payload!!');
+    const res = fakeRes();
+    await makeRouteHandler(store, TEMPLATE)({ query: { code: 'corrupt1' } } as any, res as any);
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('window.__FLIGHT_ROUTE__=');
+  });
 });
