@@ -12,7 +12,10 @@ export function makeRouteHandler(store: RouteStore, template: string) {
     const code = String(req.query.code ?? '');
     const d = await store.getRoute(code);
     if (!d) return res.status(404).setHeader('content-type', 'text/html').send(notFoundHtml());
-    store.incrHits(code).catch(() => {}); // best effort; never blocks the page
+    // Count the visit. Await so the KV write actually flushes — on serverless an un-awaited
+    // promise is frozen with the lambda after the response and silently drops the increment
+    // (worse with @vercel/kv auto-pipelining). Errors are swallowed so a KV hiccup never 500s.
+    await store.incrHits(code).catch(() => {});
     let html: string;
     try {
       const { title, description } = summarize(d);
