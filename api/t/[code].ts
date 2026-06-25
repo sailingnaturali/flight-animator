@@ -1,0 +1,32 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { summarize } from '../_lib/shortcode';
+import { injectMeta, notFoundHtml } from '../_lib/render';
+import { kvStore, type RouteStore } from '../_lib/store';
+
+const OG_IMAGE = 'https://flights.sailingnaturali.com/og-default.png';
+
+export function makeRouteHandler(store: RouteStore, template: string) {
+  return async function handler(req: VercelRequest, res: VercelResponse) {
+    const code = String(req.query.code ?? '');
+    const d = await store.getRoute(code);
+    if (!d) return res.status(404).setHeader('content-type', 'text/html').send(notFoundHtml());
+    store.incrHits(code).catch(() => {}); // best effort; never blocks the page
+    const { title, description } = summarize(d);
+    const html = injectMeta(template, { title, description, d, image: OG_IMAGE });
+    return res.status(200).setHeader('content-type', 'text/html').send(html);
+  };
+}
+
+// Read the built template lazily (first request), NOT at import time — unit tests import this
+// module before `dist/` exists, so a top-level readFileSync would crash the test run.
+let cachedTemplate: string | null = null;
+function template(): string {
+  if (cachedTemplate === null) cachedTemplate = readFileSync(join(process.cwd(), 'dist/index.html'), 'utf8');
+  return cachedTemplate;
+}
+
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  return makeRouteHandler(kvStore(), template())(req, res);
+}
