@@ -17,7 +17,7 @@ export function injectMeta(
     `<meta name="twitter:card" content="summary_large_image">`,
     `<meta name="twitter:title" content="${esc(meta.title)}">`,
     `<meta name="twitter:description" content="${esc(meta.description)}">`,
-    `<script>window.__FLIGHT_ROUTE__=${JSON.stringify(meta.d)}</script>`,
+    `<script>window.__FLIGHT_ROUTE__=${JSON.stringify(meta.d).replace(/</g, '\\u003c')}</script>`,
   ].join('');
   return template.replace('</head>', `${head}</head>`);
 }

@@ -20,6 +20,11 @@ describe('injectMeta', () => {
     const out = injectMeta(TEMPLATE, { title: 'A & B "<x>"', description: 'd', d: 'z', image: 'i' });
     expect(out).toContain('content="A &amp; B &quot;&lt;x&gt;&quot;"');
   });
+  it('escapes < in the route payload so it cannot break out of the script tag', () => {
+    const out = injectMeta(TEMPLATE, { title: 't', description: 'd', d: '</script><img src=x>', image: 'i' });
+    expect(out).not.toContain('</script><img');
+    expect(out).toContain('\\u003c/script>\\u003cimg src=x>');
+  });
 });
 
 describe('notFoundHtml', () => {
