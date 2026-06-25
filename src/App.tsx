@@ -6,8 +6,10 @@ import { loadAirports } from './route/airports';
 import type { AirportTable, Waypoint, RawStop } from './route/types';
 import { createMapView, type MapView } from './map/mapview';
 import { usePlayback } from './usePlayback';
+import { routeSearch } from './route/source';
 import { tripTotals, formatDistance, formatDuration, type DistanceUnit } from './geo/legstats';
 import { buildSharePath } from './route/share';
+import { shortenShareUrl } from './route/shareClient';
 
 const UNITS: DistanceUnit[] = ['km', 'mi', 'nm'];
 const isUnit = (v: string): v is DistanceUnit => (UNITS as string[]).includes(v);
@@ -57,7 +59,8 @@ export default function App() {
   // pre-fill from the URL once the table is ready
   useEffect(() => {
     if (!table) return;
-    const search = window.location.search || window.location.hash.replace('#', '');
+    const injected = (window as Window & { __FLIGHT_ROUTE__?: string }).__FLIGHT_ROUTE__;
+    const search = routeSearch(injected, window.location.search, window.location.hash);
     // Honor a units preference from the link (e.g. &u=mi) so a shared/recorded route reproduces it.
     const u = new URLSearchParams(search).get('u');
     if (u && isUnit(u)) setUnits(u);
@@ -165,14 +168,14 @@ export default function App() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
     else document.exitFullscreen?.();
   }
-  function onShare() {
+  async function onShare() {
     const path = buildSharePath(richRaw, input, units);
     if (!path) return;
-    const url = `${window.location.origin}${window.location.pathname}${path}`;
-    navigator.clipboard?.writeText(url).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    });
+    const longUrl = `${window.location.origin}${window.location.pathname}${path}`;
+    const url = await shortenShareUrl(longUrl, path);
+    await navigator.clipboard?.writeText(url);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
   }
 
   return (
