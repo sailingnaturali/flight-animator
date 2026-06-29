@@ -11,10 +11,8 @@ const PER_KM: Record<DistanceUnit, number> = {
 };
 
 export function formatDistance(km: number, unit: DistanceUnit): string {
-  const factor = PER_KM[unit] ?? 1;
-  const label = PER_KM[unit] ? unit : 'km';
-  const value = Math.round(km * factor);
-  return `${value.toLocaleString('en-US')} ${label}`;
+  const value = Math.round(km * PER_KM[unit]);
+  return `${value.toLocaleString('en-US')} ${unit}`;
 }
 
 export function formatDuration(ms: number): string {

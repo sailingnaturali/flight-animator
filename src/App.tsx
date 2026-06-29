@@ -157,9 +157,6 @@ export default function App() {
     setUserMoved(false);
     setInput('');
   }
-  function onReplay() {
-    onStart();
-  }
   function onResetZoom() {
     viewRef.current?.resetView();
     setUserMoved(false);
@@ -218,7 +215,7 @@ export default function App() {
 
       {frame.state === 'done' && (
         <div className="controls done">
-          <button className="btn primary" onClick={onReplay}>Replay</button>
+          <button className="btn primary" onClick={onStart}>Replay</button>
           <button className="btn" onClick={onNewTrip}>New trip</button>
           <button className="btn" onClick={onShare}>{copied ? 'Copied!' : 'Share'}</button>
         </div>

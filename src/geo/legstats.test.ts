@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDistance, formatDuration, legFlightMs, tripTotals, type DistanceUnit } from './legstats';
+import { formatDistance, formatDuration, legFlightMs, tripTotals } from './legstats';
 import type { Waypoint } from '../route/types';
 
 const wp = (lat: number, lon: number, extra: Partial<Waypoint> = {}): Waypoint => ({
@@ -18,9 +18,6 @@ describe('formatDistance', () => {
   });
   it('rounds to a whole unit', () => {
     expect(formatDistance(8614.7, 'km')).toBe('8,615 km');
-  });
-  it('falls back to km for an unknown unit', () => {
-    expect(formatDistance(100, 'parsecs' as DistanceUnit)).toBe('100 km');
   });
 });
 

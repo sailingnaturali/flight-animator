@@ -3,7 +3,6 @@ import { decodeRich } from '../../src/route/codec.js';
 import type { RawStop } from '../../src/route/types.js';
 
 const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const CODE_LEN = 12;
 export const MAX_PAYLOAD_BYTES = 4096;
 const MIN_STOPS = 2;
 const MAX_STOPS = 60;
@@ -21,10 +20,6 @@ function toBase62(hex: string): string {
 
 export function fullCode(d: string): string {
   return toBase62(createHash('sha256').update(d).digest('hex'));
-}
-
-export function encode(d: string, len: number = CODE_LEN): string {
-  return fullCode(d).slice(0, len);
 }
 
 export function validate(d: string): boolean {

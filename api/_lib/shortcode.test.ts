@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { encode, fullCode, validate, summarize } from './shortcode';
+import { fullCode, validate, summarize } from './shortcode';
 import { encodeRich } from '../../src/route/codec';
 
 const berlin = encodeRich([
@@ -10,17 +10,13 @@ const berlin = encodeRich([
 ]);
 
 describe('shortcode', () => {
-  it('encode is deterministic and 12 base62 chars', () => {
-    expect(encode(berlin)).toBe(encode(berlin));
-    expect(encode(berlin)).toMatch(/^[0-9A-Za-z]{12}$/);
+  it('fullCode is deterministic and base62', () => {
+    expect(fullCode(berlin)).toBe(fullCode(berlin));
+    expect(fullCode(berlin)).toMatch(/^[0-9A-Za-z]+$/);
   });
-  it('encode differs for different payloads', () => {
+  it('fullCode differs for different payloads', () => {
     const other = encodeRich([{ code: 'SFO' }, { code: 'LHR' }]);
-    expect(encode(berlin)).not.toBe(encode(other));
-  });
-  it('encode(len) is a prefix of fullCode', () => {
-    expect(fullCode(berlin).startsWith(encode(berlin, 13))).toBe(true);
-    expect(encode(berlin, 13)).toHaveLength(13);
+    expect(fullCode(berlin)).not.toBe(fullCode(other));
   });
   it('validate accepts a real 2+ stop payload', () => {
     expect(validate(berlin)).toBe(true);

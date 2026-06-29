@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createShortRoute } from './shorten';
 import { memStore } from './store';
-import { encode, fullCode } from './shortcode';
+import { fullCode } from './shortcode';
 import { encodeRich } from '../../src/route/codec';
 
 const d = encodeRich([{ code: 'SFO' }, { code: 'LHR' }, { code: 'CDG' }]);
@@ -26,7 +26,7 @@ describe('createShortRoute', () => {
   });
   it('lengthens the code when a different payload already occupies it', async () => {
     const store = memStore();
-    const taken = encode(d, 12);
+    const taken = fullCode(d).slice(0, 12);
     await store.putRouteIfAbsent(taken, 'A DIFFERENT PAYLOAD');
     const res = await createShortRoute(d, store);
     expect(res.code).toBe(fullCode(d).slice(0, 13));

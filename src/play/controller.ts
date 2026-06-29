@@ -19,7 +19,7 @@ export interface Playback {
   frameAt(nowMs: number): Frame;
 }
 
-function idleFrame(): Frame {
+export function idleFrame(): Frame {
   return {
     state: 'idle',
     countdownRemainingMs: 0,

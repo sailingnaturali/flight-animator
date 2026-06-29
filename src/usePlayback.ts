@@ -1,25 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Waypoint } from './route/types';
 import { buildPlan } from './geo/timeline';
-import { createPlayback, type Frame } from './play/controller';
-
-const IDLE_FRAME: Frame = {
-  state: 'idle',
-  countdownRemainingMs: 0,
-  plane: null,
-  activeLegIndex: null,
-  activeLegFraction: null,
-  arrivedIndices: [],
-};
+import { createPlayback, idleFrame, type Frame } from './play/controller';
 
 export function usePlayback(waypoints: Waypoint[] | null) {
-  const [frame, setFrame] = useState<Frame>(IDLE_FRAME);
+  const [frame, setFrame] = useState<Frame>(idleFrame);
   const pbRef = useRef<ReturnType<typeof createPlayback> | null>(null);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
     pbRef.current = waypoints ? createPlayback(buildPlan(waypoints), waypoints) : null;
-    setFrame(IDLE_FRAME);
+    setFrame(idleFrame());
     return () => cancelAnimationFrame(rafRef.current);
   }, [waypoints]);
 
@@ -41,7 +32,7 @@ export function usePlayback(waypoints: Waypoint[] | null) {
     reset() {
       cancelAnimationFrame(rafRef.current);
       pbRef.current?.reset();
-      setFrame(IDLE_FRAME);
+      setFrame(idleFrame());
     },
   };
 }
