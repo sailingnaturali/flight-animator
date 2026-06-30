@@ -37,6 +37,8 @@ export interface MapView {
   setRoute(waypoints: Waypoint[]): void;
   renderFrame(frame: Frame, waypoints: Waypoint[]): void;
   resetView(): void;
+  zoomIn(): void;
+  zoomOut(): void;
   reset(): void;
   destroy(): void;
 }
@@ -179,6 +181,16 @@ export function createMapView(container: HTMLElement): MapView {
     },
     resetView() {
       if (currentRoute.length) fitWhole(currentRoute);
+    },
+    // Manual +/- nudges. Like a user drag/scroll, these break the auto-framing so the camera
+    // doesn't snap back; the App treats them as a manual move and reveals the reset control.
+    zoomIn() {
+      framed = null;
+      map.zoomTo(map.getZoom() + 0.8, { duration: 300 });
+    },
+    zoomOut() {
+      framed = null;
+      map.zoomTo(map.getZoom() - 0.8, { duration: 300 });
     },
     setRoute(wps) {
       if (!map.isStyleLoaded()) return;

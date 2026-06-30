@@ -161,6 +161,14 @@ export default function App() {
     viewRef.current?.resetView();
     setUserMoved(false);
   }
+  function onZoomIn() {
+    viewRef.current?.zoomIn();
+    setUserMoved(true);
+  }
+  function onZoomOut() {
+    viewRef.current?.zoomOut();
+    setUserMoved(true);
+  }
   function toggleFullscreen() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
     else document.exitFullscreen?.();
@@ -191,8 +199,23 @@ export default function App() {
         </button>
       )}
 
-      {showResetZoom && (
-        <button className="reset-zoom" onClick={onResetZoom}>Reset zoom</button>
+      {!recording && (
+        <div className="zoom-controls">
+          <div className="zoom-group">
+            <button className="zoom-btn" onClick={onZoomIn} aria-label="Zoom in" title="Zoom in">+</button>
+            <button className="zoom-btn" onClick={onZoomOut} aria-label="Zoom out" title="Zoom out">−</button>
+          </div>
+          {showResetZoom && (
+            <button className="zoom-btn zoom-reset" onClick={onResetZoom} aria-label="Reset zoom" title="Reset zoom">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+              </svg>
+            </button>
+          )}
+        </div>
       )}
 
       {!recording && frame.state !== 'done' && (

@@ -36,11 +36,27 @@ html, body, #root { margin: 0; height: 100%; background: #0b0e14; }
 /* Inner element carries the heading rotation so MapLibre keeps control of the marker's position transform. */
 .plane-glyph { display: inline-block; }
 
-.reset-zoom {
+/* Map zoom controls, upper left: a connected +/- group and, once zoomed off the default
+   framing, a detached reset-to-fit button below it. Styled to read like map UI chrome. */
+.zoom-controls {
   position: absolute; left: 16px; top: 14px; z-index: 6;
-  padding: 8px 14px; border-radius: 8px; border: 1px solid #2a3550;
-  background: rgba(12,16,24,.85); color: #e8eef7; font-size: 14px; cursor: pointer;
-  backdrop-filter: blur(6px);
+  display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+}
+.zoom-group {
+  display: flex; flex-direction: column;
+  border-radius: 9px; overflow: hidden; border: 1px solid #2a3550;
+  background: rgba(12,16,24,.85); backdrop-filter: blur(6px);
+}
+.zoom-group .zoom-btn:first-child { border-bottom: 1px solid #2a3550; }
+.zoom-btn {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  padding: 0; border: none; background: transparent; color: #e8eef7;
+  font-size: 22px; line-height: 1; cursor: pointer;
+}
+.zoom-btn:hover { background: rgba(65,85,127,.35); color: #fff; }
+.zoom-reset {
+  border-radius: 9px; border: 1px solid #2a3550;
+  background: rgba(12,16,24,.85); backdrop-filter: blur(6px);
 }
 .stop-label {
   color: #0c1018; font: 600 13px system-ui, sans-serif; white-space: nowrap;
