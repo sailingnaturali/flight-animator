@@ -18,4 +18,10 @@ export default [
     plugins: { '@typescript-eslint': tsPlugin },
     rules: { ...tsPlugin.configs.recommended.rules },
   },
+  {
+    // Tests cast partial req/res/fetch stubs to satisfy handler signatures —
+    // building full Vercel request/response objects adds noise without value.
+    files: ['**/*.test.{ts,tsx}'],
+    rules: { '@typescript-eslint/no-explicit-any': 'off' },
+  },
 ];
