@@ -1,45 +1,38 @@
 import { describe, it, expect } from 'vitest';
 import { buildSharePath } from './share';
-import { encodeRich, encodeSimple } from './codec';
+import { encodeRich } from './codec';
 import type { RawStop } from './types';
 
 describe('buildSharePath', () => {
   it('encodes a simple route as ?r=', () => {
-    expect(buildSharePath(null, 'sfo-lhr-cdg', 'km')).toBe('?r=sfo-lhr-cdg');
+    expect(buildSharePath('sfo-lhr-cdg', 'km')).toBe('?r=sfo-lhr-cdg');
   });
 
   it('normalizes case in the simple form', () => {
-    expect(buildSharePath(null, 'SFO-LHR', 'km')).toBe('?r=sfo-lhr');
+    expect(buildSharePath('SFO-LHR', 'km')).toBe('?r=sfo-lhr');
   });
 
   it('strips a pasted URL down to its route', () => {
-    expect(buildSharePath(null, 'https://flights.example/?r=sfo-lhr', 'km')).toBe('?r=sfo-lhr');
+    expect(buildSharePath('https://flights.example/?r=sfo-lhr', 'km')).toBe('?r=sfo-lhr');
   });
 
   it('appends &u= only when the unit is not the default km', () => {
-    expect(buildSharePath(null, 'sfo-lhr', 'mi')).toBe('?r=sfo-lhr&u=mi');
-    expect(buildSharePath(null, 'sfo-lhr', 'nm')).toBe('?r=sfo-lhr&u=nm');
-    expect(buildSharePath(null, 'sfo-lhr', 'km')).toBe('?r=sfo-lhr');
+    expect(buildSharePath('sfo-lhr', 'mi')).toBe('?r=sfo-lhr&u=mi');
+    expect(buildSharePath('sfo-lhr', 'nm')).toBe('?r=sfo-lhr&u=nm');
+    expect(buildSharePath('sfo-lhr', 'km')).toBe('?r=sfo-lhr');
   });
 
-  it('re-encodes loaded rich stops as ?d= so dates/coords replay exactly', () => {
-    const rich: RawStop[] = [
-      { code: 'SFO', depart: '2025-04-15T14:30:00Z' },
-      { code: 'LHR', arrive: '2025-04-15T22:15:00Z' },
-    ];
-    expect(buildSharePath(rich, encodeSimple(rich), 'km')).toBe(`?d=${encodeRich(rich)}`);
-    expect(buildSharePath(rich, encodeSimple(rich), 'nm')).toBe(`?d=${encodeRich(rich)}&u=nm`);
+  it('never emits ?d= — a loaded rich route shares as the friendly code form', () => {
+    // App downgrades a decodable ?d= link to the code form before this runs, so this is the input.
+    expect(buildSharePath('sfo-lhr', 'km')).toBe('?r=sfo-lhr');
   });
 
-  it('passes through a pasted rich URL as ?d=', () => {
+  it('yields no link for a ?d= blob left in the box', () => {
     const rich: RawStop[] = [{ code: 'SFO' }, { code: 'LHR' }];
-    const d = encodeRich(rich);
-    expect(buildSharePath(null, `https://flights.example/?d=${d}`, 'km')).toBe(`?d=${d}`);
+    expect(buildSharePath(`https://flights.example/?d=${encodeRich(rich)}`, 'km')).toBe('');
   });
 
-  it('falls back to the friendly form once the user edits away from the rich route', () => {
-    const rich: RawStop[] = [{ code: 'SFO' }, { code: 'LHR' }];
-    // input no longer matches the rich friendly form -> treat as a fresh simple route
-    expect(buildSharePath(rich, 'sfo-cdg', 'km')).toBe('?r=sfo-cdg');
+  it('returns no link for empty input', () => {
+    expect(buildSharePath('', 'km')).toBe('');
   });
 });

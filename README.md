@@ -84,9 +84,13 @@ keeps only airports with an IATA code and scheduled service, and writes the comp
 
 ## Deploy
 
-Configured for [Vercel](https://vercel.com) via `vercel.json`. `vercel --prod` or connect
-the repo — no environment variables required. All assets are static; the SPA rewrite
-handles deep-linked `?r=`/`?d=` URLs.
+GitHub Pages, via `.github/workflows/deploy.yml` on every push to `main` — fully static,
+no server and no environment variables. `public/CNAME` holds the custom domain, and the
+build copies `index.html` to `404.html` so deep links resolve to the app.
+
+Sharing produces `?r=` airport-code links only. Rich `?d=` payloads (custom coordinates,
+labels, dwell dates) still *load* from an existing link, but the Share button always emits
+the friendly code form.
 
 ## License and data credits
 
